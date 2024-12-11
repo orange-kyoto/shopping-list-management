@@ -8,12 +8,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"shoppint-list-management/database"
+	databaseTypes "shoppint-list-management/database/types"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -24,21 +25,8 @@ var (
 	tableName      = os.Getenv("DYNAMODB_USER_TABLE_NAME")
 )
 
-type User struct {
-	// TODO: 適切なデータ構造を設計する
-	// shoppint_list_id とかは少なくとも必要と思われる
-	UserID       string `json:"user_id"`
-	UserEmail    string `json:"user_email"`
-	ConnectionID string `json:"connection_id"`
-}
-
 func init() {
-	cfg, err := config.LoadDefaultConfig(context.Background())
-	if err != nil {
-		panic("Unable to load SDK config, " + err.Error())
-	}
-
-	dynamoDBClient = dynamodb.NewFromConfig(cfg)
+	dynamoDBClient = database.GetDynamoDBClient()
 }
 
 func handler(ctx context.Context, request events.APIGatewayWebsocketProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -56,7 +44,7 @@ func handler(ctx context.Context, request events.APIGatewayWebsocketProxyRequest
 		}, nil
 	}
 
-	user, err := getUser(ctx, userId)
+	user, err := getUserItem(ctx, userId)
 	if user == nil {
 		// NOTE: ユーザーの新規作成 or ログイン処理が成功した前提で websocket の接続をする。
 		return events.APIGatewayProxyResponse{
@@ -81,7 +69,7 @@ func handler(ctx context.Context, request events.APIGatewayWebsocketProxyRequest
 	}, nil
 }
 
-func getUser(ctx context.Context, userId string) (*User, error) {
+func getUserItem(ctx context.Context, userId string) (*databaseTypes.UserItem, error) {
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]types.AttributeValue{
@@ -94,7 +82,7 @@ func getUser(ctx context.Context, userId string) (*User, error) {
 		return nil, err
 	}
 
-	user := User{}
+	user := databaseTypes.UserItem{}
 	err = attributevalue.UnmarshalMap(result.Item, &user)
 	if err != nil {
 		return nil, err
@@ -103,11 +91,11 @@ func getUser(ctx context.Context, userId string) (*User, error) {
 	return &user, nil
 }
 
-func updateUserConnectionID(ctx context.Context, user *User) error {
+func updateUserConnectionID(ctx context.Context, user *databaseTypes.UserItem) error {
 	input := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]types.AttributeValue{
-			"userId": &types.AttributeValueMemberS{Value: user.UserID},
+			"userId": &types.AttributeValueMemberS{Value: user.UserID.ToString()},
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":connectionId": &types.AttributeValueMemberS{Value: user.ConnectionID},
