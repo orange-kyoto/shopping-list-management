@@ -1,5 +1,13 @@
 provider "aws" {
   region = var.aws_region
+
+  default_tags {
+    tags = {
+      "App"       = "shopping-list-management"
+      "Env"       = "dev" // TODO: fix
+      "ManagedBy" = "Terraform"
+    }
+  }
 }
 
 data "aws_caller_identity" "current" {}
