@@ -36,7 +36,7 @@ func handler(ctx context.Context, request events.APIGatewayWebsocketProxyRequest
 
 	// TODO: ユーザーIDをどこから取得するか検討する。
 	// connect route では Lambda Authorizer を使って認証を通す予定。
-	userId := request.QueryStringParameters["userID"]
+	userId := request.QueryStringParameters["user_id"]
 	if userId == "" {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
@@ -73,7 +73,7 @@ func getUserItem(ctx context.Context, userId string) (*databaseTypes.UserItem, e
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]types.AttributeValue{
-			"userId": &types.AttributeValueMemberS{Value: userId},
+			"user_id": &types.AttributeValueMemberS{Value: userId},
 		},
 	}
 
@@ -95,12 +95,12 @@ func updateUserConnectionID(ctx context.Context, user *databaseTypes.UserItem) e
 	input := &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]types.AttributeValue{
-			"userId": &types.AttributeValueMemberS{Value: user.UserID.ToString()},
+			"user_id": &types.AttributeValueMemberS{Value: user.UserID.ToString()},
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":connectionId": &types.AttributeValueMemberS{Value: user.ConnectionID},
 		},
-		UpdateExpression: aws.String("SET connectionId = :connectionId"),
+		UpdateExpression: aws.String("SET connection_id = :connectionId"),
 	}
 
 	_, err := dynamoDBClient.UpdateItem(ctx, input)

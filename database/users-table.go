@@ -38,7 +38,6 @@ func GetUserItem(ctx context.Context, userId string) (*databaseTypes.UserItem, e
 
 func CreateUserItem(ctx context.Context, userItem databaseTypes.UserItem) error {
 	input, err := attributevalue.MarshalMap(userItem)
-
 	if err != nil {
 		return err
 	}

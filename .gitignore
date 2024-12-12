@@ -1,2 +1,7 @@
 /dev/
-.terraform/providers/
+/.terraform/
+*.tfstate
+*.tfstate.backup
+
+/build/
+/builds/

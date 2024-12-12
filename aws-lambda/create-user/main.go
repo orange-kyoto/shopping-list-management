@@ -12,6 +12,7 @@ import (
 	databaseTypes "shoppint-list-management/database/types"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
@@ -53,4 +54,8 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		StatusCode: 200,
 		Body:       "User created",
 	}, nil
+}
+
+func main() {
+	lambda.Start(handler)
 }
